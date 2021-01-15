@@ -17,6 +17,8 @@ jenkinsを更新する際やpluginを導入する際の検証環境として使�
     - Docker imageの作成と、Docker Containerの起動を行う
 - `docker-exec.sh`
     - Docker Containerにログインする
+- `jenkins-users-restore.sh`
+    - Docker Containerにログイン後、バックアップからログインユーザー情報を復元するために使う
 - `jennkins-update.sh`
     - Docker Containerにログイン後、Jenkinsを最新版に更新するために実行する
 
@@ -25,7 +27,7 @@ jenkinsを更新する際やpluginを導入する際の検証環境として使�
 ### Jenkinsバックアップファイルの配置
 Dockerで再現したい状態のバックアップファイル(tar.gz)を `backup` ディレクトリに配置
 
-### `docker-build-run.sh`　を実行してDocker imageの作成とContainer起動をし、指定したJenkinsバージョンの動作を確認する
+### `docker-build-run.sh` を実行してDocker imageの作成とContainer起動をし、指定したJenkinsバージョンの動作を確認する
 
 
 `docker-build-run.sh` の使い方を見る
@@ -40,7 +42,8 @@ Dockerfileからdocker imageを作成し、containerを起動する
     -i DOCKER IMAGE     buildするDocker image name
     -t DOCKER IMAGE TAG buildするDocker image tag
     -c DOCKER CONTAINER Docker container name
-    -o HOSTNAME         Docker container　起動時のホスト名
+    -o HOSTNAME         Docker container 起動時のホスト名
+    -p PORT             Docker container 起動時のport
 
     -h                  display this help ane exit
     -V                  display version information and exit
@@ -68,8 +71,7 @@ Error: No such container: web-jenkins # TODO: 初回起動時に出てしまう
 
 指定したJenkinsのバージョンになっているか確認
 
-
-指定されたバックアップファイルのデータで復元しているので、バックアップされているユーザーでログインできる
+**この時点では、バックアップからユーザー情報が復元されていないのでログイン不可**
 
 ### Containerにログインする
 
@@ -86,6 +88,31 @@ $ bash script/docker-exec.sh hoge
 container name -> hoge
 ```
 
+### バックアップからログインユーザー情報を復元する
+
+**Containerにログインした状態で実行**
+
+```bash
+[root@localhost tmp]# ls
+akuma8832832299169815341jar   jenkins-update.sh
+backup_20210114032202.tar.gz  jenkins-users-restore.sh
+hsperfdata_jenkins            jetty-0.0.0.0-8080-war-_-any-4379668274880719785.dir
+hsperfdata_root               jna4199380826897594556jar
+jenkins-backup                winstone1973017021983588556.jar
+
+[root@localhost tmp]# ll /var/lib/jenkins/
+drwxr-xr-x  2 jenkins jenkins  4096 Jan 16 01:37 users
+drwxr-xr-x 16 jenkins jenkins  4096 Jan 16 01:37 users_tmp
+
+[root@localhost tmp]# bash jenkins-users-restore.sh
+[root@localhost tmp]# ll /var/lib/jenkins/
+drwxr-xr-x 1 jenkins jenkins  4096 Jan 16 02:00 users
+```
+
+`http://localhost:8080` にアクセスし、Jenkinsが動作しているか確認
+
+復元したログインユーザー情報でログインできるか確認
+
 ### yumでJenkinsを最新バージョンにアップデートする
 
 **Containerにログインした状態で実行**
@@ -95,8 +122,11 @@ container name -> hoge
 /tmp
 
 [root@localhost tmp]# ls
-akuma1863248762427951874jar   hsperfdata_jenkins  jenkins-backup     jetty-0.0.0.0-8080-war-_-any-3559354772016457245.dir  winstone839309672606307168.jar
-backup_20201213164107.tar.gz  hsperfdata_root     jenkins-update.sh  jna3214363028558459478jar
+akuma8832832299169815341jar   jenkins-update.sh
+backup_20210114032202.tar.gz  jenkins-users-restore.sh
+hsperfdata_jenkins            jetty-0.0.0.0-8080-war-_-any-4379668274880719785.dir
+hsperfdata_root               jna4199380826897594556jar
+jenkins-backup                winstone1973017021983588556.jar
 
 [root@localhost tmp]# bash jenkins-update.sh
 Loaded plugins: fastestmirror, ovl
